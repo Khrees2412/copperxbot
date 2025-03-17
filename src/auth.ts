@@ -5,9 +5,13 @@ dotenv.config();
 
 const API_BASE_URL = process.env.COPPERX_API_BASE_URL;
 
-export async function requestEmailOTP(email: string): Promise<void> {
+export async function requestEmailOTP(email: string): Promise<string> {
     try {
-        await axios.post(`${API_BASE_URL}/auth/email-otp/request`, { email });
+        const response = await axios.post(
+            `${API_BASE_URL}/auth/email-otp/request`,
+            { email }
+        );
+        return response.data.sid; // Capture the sid
     } catch (error: any) {
         console.error(
             "Error requesting OTP:",
@@ -18,17 +22,19 @@ export async function requestEmailOTP(email: string): Promise<void> {
         );
     }
 }
-
+// src/auth.ts
 export async function authenticateEmailOTP(
     email: string,
-    otp: string
+    otp: string,
+    sid: string
 ): Promise<string> {
     try {
         const response = await axios.post(
             `${API_BASE_URL}/auth/email-otp/authenticate`,
-            { email, otp }
+            { email, otp, sid }
         );
-        return response.data.token;
+        console.log("Authenticate API response:", response.data);
+        return response.data.accessToken; // Corrected line
     } catch (error: any) {
         console.error(
             "Error authenticating OTP:",
@@ -60,7 +66,7 @@ export async function getKycStatus(token: string): Promise<any> {
         const response = await axios.get(`${API_BASE_URL}/kycs`, {
             headers: { Authorization: `Bearer ${token}` },
         });
-        return response.data;
+        return response.data.status;
     } catch (error: any) {
         console.error(
             "Error getting KYC status:",
